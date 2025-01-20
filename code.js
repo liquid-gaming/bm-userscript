@@ -1,4 +1,4 @@
-const version = "12.03";
+const version = "12.04";
 const updateRate = "150" //ms | Overall rate to run the code at.
 const colors = {
     cTeamBluefor: "#4eacff",
