@@ -84,7 +84,6 @@ const sets = {
         "Nightshade",
         "omgitsjesse",
         "Outlast",
-        "QTheEngineer",
         "Redneck",
         "Shaka",
         "Skipper",
@@ -102,7 +101,8 @@ const sets = {
         "Wolf Fang",
         "xplay0321",
         "Θscar Mike",
-        "POM_Hephoof"
+        "POM_Hephoof",
+        "Lucrass Kelvac"
     ]),
 
     teamBluefor: new Set([
