@@ -82,7 +82,6 @@ const sets = {
         "Moses",
         "N1nja",
         "Nightshade",
-        "omgitsjesse",
         "Outlast",
         "Redneck",
         "Shaka",
