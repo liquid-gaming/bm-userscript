@@ -103,6 +103,7 @@ const sets = {
         "United States Army",
         "United States Marine Corps",
         "Turkish Land Forces",
+        "Ground Forces of Iran",
     ]),
 
     teamOpfor: new Set([
