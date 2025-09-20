@@ -64,7 +64,7 @@ const sets = {
       "Ethan",
       "ETXBONES",
       "Exploits",
-      "got2bhockey",
+      "got2bhockey ",
       "budge",
       "chaot3ch",
       "GRIM_CURLY",
