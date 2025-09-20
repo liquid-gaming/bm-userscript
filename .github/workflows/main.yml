@@ -8,18 +8,48 @@ on:
     branches:
       - '*'  # Triggers on pull requests for any branch
 
+permissions:
+  contents: write
+
 jobs:
   minify-and-update:
     runs-on: ubuntu-latest
 
     steps:
     - name: Checkout code
-      uses: actions/checkout@v2
+      uses: actions/checkout@v4
+
+    - name: Auto-increment version in code.js
+      run: |
+        # Extract current version from first line (e.g., const version = "12.06";)
+        version=$(grep -oP 'const version = "\K[^"]+' code.js)
+
+        # Split major.minor
+        major=$(echo "$version" | cut -d. -f1)
+        minor=$(echo "$version" | cut -d. -f2)
+
+        # Increment with rollover at 99 -> bump major and reset minor to 00
+        if [ "$minor" -ge 99 ]; then
+          major=$((major+1))
+          minor=0
+        else
+          minor=$((minor+1))
+        fi
+
+        # Two-digit minor formatting
+        new_version="$major.$(printf "%02d" "$minor")"
+
+        # Replace first line in code.js
+        sed -i '1s|.*|const version = "'"$new_version"'";|' code.js
+
+        # Expose for later steps
+        echo "NEW_VERSION=$new_version" >> "$GITHUB_ENV"
+        echo "Bumped version to $new_version"
 
     - name: Install Node.js
       uses: actions/setup-node@v4
       with:
-        node-version: '14'  # Adjust the Node.js version as needed
+        node-version: '14'  # Adjust as needed
 
     - name: Install dependencies
       run: npm install
@@ -31,18 +61,30 @@ jobs:
       run: |
         tmp_file=$(mktemp)
         cp code.min.js "$tmp_file"
+        # Escape slashes and ampersands so sed can safely inject the whole line
         sed -i '17s~.*~'"$(sed 's/[\/&]/\\&/g' "$tmp_file")"'~' bm-toolkit-desktop.min.js
         rm "$tmp_file"
-    
-    - name: Update @version in bm-toolkit-desktop.min.js to CONST version
+
+    - name: Update @version in bm-toolkit-desktop.min.js to NEW_VERSION
       run: |
-        version=$(grep -oP 'const version = "\K[^"]+' code.js)
-        sed -i "4s|// @version [0-9]*\(\.[0-9]*\)\?|// @version $version|" bm-toolkit-desktop.min.js
-      
+        sed -i "4s|// @version .*|// @version $NEW_VERSION|" bm-toolkit-desktop.min.js
+
+    - name: Detect changes
+      id: changes
+      run: |
+        git add code.js code.min.js bm-toolkit-desktop.min.js
+        if git diff --cached --quiet; then
+          echo "changed=false" >> "$GITHUB_OUTPUT"
+          echo "No changes detected."
+        else
+          echo "changed=true" >> "$GITHUB_OUTPUT"
+          echo "Changes detected."
+        fi
+
     - name: Commit and push changes
+      if: steps.changes.outputs.changed == 'true'
       run: |
         git config --global user.email "actions@github.com"
         git config --global user.name "GitHub Actions"
-        git add code.min.js bm-toolkit-desktop.min.js
-        git commit -m "Minify JS and Update Versions"
+        git commit -m "Minify JS and bump to v$NEW_VERSION"
         git push
