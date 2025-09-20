@@ -111,7 +111,6 @@ const sets = {
         "Middle Eastern Alliance",
         "Middle Eastern Insurgents",
         "Insurgent Forces",
-        "Irregular Militia Forces",
         "People's Liberation Army",
         "Russian Airborne Forces",
         "PLA Navy Marine Corps",

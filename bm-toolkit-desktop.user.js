@@ -2,8 +2,8 @@
 // @name Battlemetrics Toolkit - Desktop
 // @namespace https://www.battlemetrics.com/
 // @version 12.07
-// @updateURL https://raw.githubusercontent.com/liquid-gaming/bm-userscript/main/bm-toolkit-desktop.min.js
-// @downloadURL https://raw.githubusercontent.com/liquid-gaming/bm-userscript/main/bm-toolkit-desktop.min.js
+// @updateURL https://raw.githubusercontent.com/liquid-gaming/bm-userscript/main/bm-toolkit-desktop.user.js
+// @downloadURL https://raw.githubusercontent.com/liquid-gaming/bm-userscript/main/bm-toolkit-desktop.user.js
 // @description Modifies the rcon panel for battlemetrics to help color code important events and details about players.
 // @author Cephomet
 // @match https://www.battlemetrics.com/*
