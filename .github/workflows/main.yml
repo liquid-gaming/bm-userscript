@@ -21,11 +21,18 @@ jobs:
 
     - name: Auto-increment version in code.js
       run: |
-        # Extract current version from first line (e.g., const version = "12.06";)
-        version=$(grep -oP 'const version = "\K[^"]+' code.js)
+        # Expect first line like: const version = "12.06";
+        version=$(sed -n '1s/.*const version = "\([0-9]\+\)\.\([0-9]\+\)".*/\1.\2/p' code.js)
+        if [ -z "$version" ]; then
+          echo "Could not parse version from code.js first line"; exit 1
+        fi
 
-        major=$(echo "$version" | cut -d. -f1)
-        minor=$(echo "$version" | cut -d. -f2)
+        major=${version%%.*}
+        minor=${version#*.}
+
+        # Force base-10 to avoid octal interpretation
+        major=$((10#$major))
+        minor=$((10#$minor))
 
         if [ "$minor" -ge 99 ]; then
           major=$((major+1))
@@ -34,11 +41,14 @@ jobs:
           minor=$((minor+1))
         fi
 
-        new_version="$major.$(printf "%02d" "$minor")"
-        sed -i '1s|.*|const version = "'"$new_version"'";|' code.js
+        new_version=$(printf "%d.%02d" "$major" "$minor")
+
+        # Replace the first line with the new version
+        sed -i '1s|^.*$|const version = "'"$new_version"'";|' code.js
 
         echo "NEW_VERSION=$new_version" >> "$GITHUB_ENV"
         echo "Bumped version to $new_version"
+
 
     - name: Install Node.js
       uses: actions/setup-node@v4
