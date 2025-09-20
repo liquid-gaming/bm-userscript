@@ -301,11 +301,11 @@ async function runCode() {
                         const pSteamID = getInnerTextByTitle("765", "SteamID MISSING?");
                         const pEOSID = getInnerTextByTitle("0002", "");
                         const pName = document.querySelector("#RCONPlayerPage > h1")?.innerText || 'NAME MISSING?';
-
-                        const textToCopy = `**User**: ${pName} <${window.location.href}>\n**IDs**: ${pSteamID} // ${pEOSID}\n**Server**:\n**Infraction**:\n**Evidence Linked Below**:`;
+                    
+                        const textToCopy = `**User:** ${pName}\n**IDs:** ${pSteamID} // ${pEOSID}\n**BM Link:** ${window.location.href}\n**Server:**\n**Infraction:**\n**Evidence Linked Below:**`;
                         copyToClipboard(textToCopy);
                     });
-
+                    
                     openURLButton.addEventListener("click", () => {
                         const pSteamID = getInnerTextByTitle("765", "SteamID MISSING?");
                         if (pSteamID && pSteamID !== "SteamID MISSING?") {
