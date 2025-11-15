@@ -57,7 +57,6 @@ const sets = {
       "basa/doc",
       "bloodmoon529",
       "Capt-Crossbones",
-      "Charlie",
       "Chillz",
       "davisfoxes",
       "dontfakeit",
