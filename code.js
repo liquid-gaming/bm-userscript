@@ -1,4 +1,4 @@
-const version = "12.13";
+const version = "12.14";
 const updateRate = 150;
 
 const colors = {
@@ -249,7 +249,7 @@ function cornerButtons() {
         { id: "TRbutton", label: "T", url: "https://www.battlemetrics.com/rcon/servers/7894269", backgroundColor: "orange" },
         { id: "ban", label: "B", url: "https://www.battlemetrics.com/rcon/bans?filter%5Borganization%5D=17085&filter%5Bexpired%5D=true", backgroundColor: "red" },
         { id: "lanes", label: "M", url: "https://squadmaps.com/", backgroundColor: "#7E6900" },
-        { id: "version", label: version, url: "https://raw.githubusercontent.com/TempusOwl/bm-userscript/main/bm-toolkit-desktop.min.js", backgroundColor: "black", fontSize: "6pt" }
+        { id: "version", label: version, url: "https://raw.githubusercontent.com/liquid-gaming/bm-userscript/main/bm-toolkit-desktop.user.js", backgroundColor: "black", fontSize: "6pt" }
     ];
 
     const buttonContainer = document.createElement("div");
