@@ -67,14 +67,26 @@ jobs:
             exit 1
           }
 
-          minified_code=$(cat code.min.js)
-          escaped_code=$(printf '%s\n' "$minified_code" | sed 's/[\/&]/\\&/g')
+          python3 <<'PY'
+          from pathlib import Path
+          import os
 
-          sed -i "16s~.*~$escaped_code~" bm-toolkit-desktop.user.js
+          user_file = Path("bm-toolkit-desktop.user.js")
+          min_file = Path("code.min.js")
+          new_version = os.environ["NEW_VERSION"]
 
-          sed -i "4s|// @version .*|// @version $NEW_VERSION|" bm-toolkit-desktop.user.js
+          lines = user_file.read_text().splitlines()
+          minified = min_file.read_text().strip()
 
-          rm -f code.min.js
+          # Replace line 16, 1-indexed
+          lines[15] = minified
+
+          # Replace @version on line 4, 1-indexed
+          lines[3] = f"// @version {new_version}"
+
+          user_file.write_text("\n".join(lines) + "\n")
+          min_file.unlink()
+          PY
 
       - name: Detect changes
         id: changes
