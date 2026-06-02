@@ -15,84 +15,92 @@ jobs:
   minify-and-update:
     runs-on: ubuntu-latest
 
+    env:
+      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
+      - name: Checkout code
+        uses: actions/checkout@v5
 
-    - name: Auto-increment version in code.js
-      run: |
-        # Expect first line like: const version = "12.06";
-        version=$(sed -n '1s/.*const version = "\([0-9]\+\)\.\([0-9]\+\)".*/\1.\2/p' code.js)
-        if [ -z "$version" ]; then
-          echo "Could not parse version from code.js first line"; exit 1
-        fi
+      - name: Auto-increment version in code.js
+        run: |
+          # Expect first line like: const version = "12.06";
+          version=$(sed -n '1s/.*const version = "\([0-9]\+\)\.\([0-9]\+\)".*/\1.\2/p' code.js)
 
-        major=${version%%.*}
-        minor=${version#*.}
+          if [ -z "$version" ]; then
+            echo "Could not parse version from code.js first line"
+            exit 1
+          fi
 
-        # Force base-10 to avoid octal interpretation
-        major=$((10#$major))
-        minor=$((10#$minor))
+          major=${version%%.*}
+          minor=${version#*.}
 
-        if [ "$minor" -ge 99 ]; then
-          major=$((major+1))
-          minor=0
-        else
-          minor=$((minor+1))
-        fi
+          major=$((10#$major))
+          minor=$((10#$minor))
 
-        new_version=$(printf "%d.%02d" "$major" "$minor")
+          if [ "$minor" -ge 99 ]; then
+            major=$((major+1))
+            minor=0
+          else
+            minor=$((minor+1))
+          fi
 
-        # Replace the first line with the new version
-        sed -i '1s|^.*$|const version = "'"$new_version"'";|' code.js
+          new_version=$(printf "%d.%02d" "$major" "$minor")
 
-        echo "NEW_VERSION=$new_version" >> "$GITHUB_ENV"
-        echo "Bumped version to $new_version"
+          sed -i '1s|^.*$|const version = "'"$new_version"'";|' code.js
 
+          echo "NEW_VERSION=$new_version" >> "$GITHUB_ENV"
+          echo "Bumped version to $new_version"
 
-    - name: Install Node.js
-      uses: actions/setup-node@v4
-      with:
-        node-version: '14'   # keep as-is; bump if your deps need >=20
+      - name: Install Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: '24'
 
-    - name: Install dependencies
-      run: npm install
+      - name: Install dependencies
+        run: npm install
 
-    - name: Build minified code (temp only)
-      run: npx uglify-js code.js -o code.min.js
+      - name: Build minified code
+        run: npx uglify-js code.js -o code.min.js
 
-    - name: Update bm-toolkit-desktop.user.js (inject code + bump @version)
-      run: |
-        test -f bm-toolkit-desktop.user.js || { echo "bm-toolkit-desktop.user.js not found"; exit 1; }
+      - name: Update bm-toolkit-desktop.user.js
+        run: |
+          test -f bm-toolkit-desktop.user.js || {
+            echo "bm-toolkit-desktop.user.js not found"
+            exit 1
+          }
 
-        # 1) Inject minified code at line 16 (preserves your header with namespace/URLs)
-        tmp_file=$(mktemp)
-        cp code.min.js "$tmp_file"
-        sed -i '16s~.*~'"$(sed 's/[\/&]/\\&/g' "$tmp_file")"'~' bm-toolkit-desktop.user.js
-        rm "$tmp_file"
+          minified_code=$(cat code.min.js)
+          escaped_code=$(printf '%s\n' "$minified_code" | sed 's/[\/&]/\\&/g')
 
-        # 2) Bump @version in the header (assumes it's on line 4)
-        sed -i "4s|// @version .*|// @version $NEW_VERSION|" bm-toolkit-desktop.user.js
+          sed -i "16s~.*~$escaped_code~" bm-toolkit-desktop.user.js
 
-        # Cleanup: we don't commit code.min.js
-        rm -f code.min.js
+          sed -i "4s|// @version .*|// @version $NEW_VERSION|" bm-toolkit-desktop.user.js
 
-    - name: Detect changes
-      id: changes
-      run: |
-        git add code.js bm-toolkit-desktop.user.js
-        if git diff --cached --quiet; then
-          echo "changed=false" >> "$GITHUB_OUTPUT"
-          echo "No changes detected."
-        else
-          echo "changed=true" >> "$GITHUB_OUTPUT"
-          echo "Changes detected."
-        fi
+          rm -f code.min.js
 
-    - name: Commit and push changes
-      if: steps.changes.outputs.changed == 'true'
-      run: |
-        git config --global user.email "actions@github.com"
-        git config --global user.name "GitHub Actions"
-        git commit -m "Build .user.js and bump to v$NEW_VERSION"
-        git push
+      - name: Detect changes
+        id: changes
+        run: |
+          git add code.js bm-toolkit-desktop.user.js
+
+          if git diff --cached --quiet; then
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+            echo "No changes detected."
+          else
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+            echo "Changes detected."
+          fi
+
+      - name: Commit changes
+        if: steps.changes.outputs.changed == 'true'
+        run: |
+          git config --global user.email "actions@github.com"
+          git config --global user.name "GitHub Actions"
+
+          git commit -m "Build .user.js and bump to v$NEW_VERSION"
+
+      - name: Push changes
+        if: steps.changes.outputs.changed == 'true'
+        run: |
+          git push
