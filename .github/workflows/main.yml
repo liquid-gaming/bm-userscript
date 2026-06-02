@@ -57,9 +57,6 @@ jobs:
         with:
           node-version: '24'
 
-      - name: Install dependencies
-        run: npm install
-
       - name: Build minified code
         run: npx uglify-js code.js -o code.min.js
 
