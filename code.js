@@ -1,4 +1,4 @@
-const version = "12.19";
+const version = "12.20";
 const updateRate = 150;
 
 const colors = {
