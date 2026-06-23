@@ -30,7 +30,6 @@ jobs:
 
           major=${version%%.*}
           minor=${version#*.}
-
           major=$((10#$major))
           minor=$((10#$minor))
 
@@ -44,48 +43,23 @@ jobs:
           new_version=$(printf "%d.%02d" "$major" "$minor")
 
           sed -i '1s|^.*$|const version = "'"$new_version"'";|' code.js
+          sed -i 's|^// @version .*|// @version '"$new_version"'|' header.user.js
 
           echo "NEW_VERSION=$new_version" >> "$GITHUB_ENV"
-          echo "Bumped version to $new_version"
 
-      - name: Update bm-toolkit-desktop.user.js
+      - name: Build bm-toolkit-desktop.user.js
         run: |
-          test -f bm-toolkit-desktop.user.js || {
-            echo "bm-toolkit-desktop.user.js not found"
-            exit 1
-          }
-
-          python3 <<'PY'
-          from pathlib import Path
-          import os
-
-          user_file = Path("bm-toolkit-desktop.user.js")
-          source_file = Path("code.js")
-          new_version = os.environ["NEW_VERSION"]
-
-          lines = user_file.read_text().splitlines()
-          source = source_file.read_text().strip()
-
-          # Replace @version on line 4, 1-indexed
-          lines[3] = f"// @version {new_version}"
-
-          # Replace line 16, 1-indexed, with raw code.js
-          lines[15] = source
-
-          user_file.write_text("\n".join(lines) + "\n")
-          PY
+          cat header.user.js code.js > bm-toolkit-desktop.user.js
 
       - name: Detect changes
         id: changes
         run: |
-          git add code.js bm-toolkit-desktop.user.js
+          git add code.js header.user.js bm-toolkit-desktop.user.js
 
           if git diff --cached --quiet; then
             echo "changed=false" >> "$GITHUB_OUTPUT"
-            echo "No changes detected."
           else
             echo "changed=true" >> "$GITHUB_OUTPUT"
-            echo "Changes detected."
           fi
 
       - name: Commit changes
@@ -93,7 +67,6 @@ jobs:
         run: |
           git config --global user.email "actions@github.com"
           git config --global user.name "GitHub Actions"
-
           git commit -m "Update userscript and bump to v$NEW_VERSION"
 
       - name: Push changes
