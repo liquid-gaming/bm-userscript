@@ -1,4 +1,4 @@
-const version = "12.15";
+const version = "12.16";
 const updateRate = 150;
 
 const colors = {
@@ -50,7 +50,8 @@ const sets = {
         "You will be kicked in 2 minutes if you are still not in a squad",
         "To switch teams, please run the",
         "Check your seeding reward status via",
-        "Trigger added flag LiQ Seeder"
+        "Trigger added flag LiQ Seeder",
+        "Congrats to our seeding rewards giveaway winners! Type \"!seedrewards\" in chat for more info."
     ]),
 
     trackedTriggers: new Set(["[SL Kit]"]),
@@ -108,6 +109,7 @@ const sets = {
         "Wasted",
         "white knife",
         "wjli13125",
+        "wwrp450",
         "WobbleBob29",
         "xplay0321",
         "ZB"
@@ -120,7 +122,7 @@ const sets = {
         "United States Army",
         "United States Marine Corps",
         "Turkish Land Forces",
-        "Ground Forces of Iran"
+        "Armed Forces of Ukraine"
     ]),
 
     teamOpfor: new Set([
@@ -132,7 +134,8 @@ const sets = {
         "Russian Airborne Forces",
         "PLA Navy Marine Corps",
         "PLA Amphibious Ground Forces",
-        "Western Private Military Contractors"
+        "Western Private Military Contractors",
+        "Ground Forces of Iran"
     ]),
 
     teamIndepend: new Set([
@@ -155,7 +158,9 @@ const sets = {
         "Squad disband - SL",
         "was removed from their squad by Trigger.",
         "requested layer list.",
-        "was removed from their squad by"
+        "was removed from their squad by",
+        "unpossessed the admin camera",
+        "possessed the admin camera"
     ])
 };
 
@@ -366,12 +371,11 @@ function logColoring() {
     const activityItems = getActivityElements();
     const playerLinks = document.querySelectorAll(selectors.playerLinks);
 
-    // Admin names stay cyan.
-    adminApplyColor(playerLinks, sets.adminList, colors.cAdminName);
-    adminApplyColor(activityItems, sets.adminList, colors.cAdminName);
-
-    // Admin actions should be green.
+    // Row colors first.
     applyColor(activityItems, sets.adminTerms, colors.cAdminAction);
+
+    // ChatAdmin messages should be green.
+    applyColor(activityItems, new Set(["(ChatAdmin)"]), colors.cAdminAction);
 
     // Mod actions stay red.
     applyColor(activityItems, sets.actionList, colors.cModAction);
@@ -385,6 +389,9 @@ function logColoring() {
     applyColor(activityItems, sets.teamIndepend, colors.cTeamIndepend);
     applyColor(activityItems, sets.teamKilled, colors.cTeamKilled);
     applyColor(activityItems, sets.trackedTriggers, colors.cTracked);
+
+    // Admin names last so they stay cyan over green ChatAdmin rows.
+    adminApplyColor(playerLinks, sets.adminList, colors.cAdminName);
 
     // Only exact Admin badges, not whole sections containing the word Admin.
     [...document.querySelectorAll("span, div, strong")]
