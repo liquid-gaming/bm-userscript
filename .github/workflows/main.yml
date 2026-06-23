@@ -1,4 +1,4 @@
-name: Minify and Update
+name: Update Userscript
 
 on:
   push:
@@ -12,11 +12,8 @@ permissions:
   contents: write
 
 jobs:
-  minify-and-update:
+  update-userscript:
     runs-on: ubuntu-latest
-
-    env:
-      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
     steps:
       - name: Checkout code
@@ -24,7 +21,6 @@ jobs:
 
       - name: Auto-increment version in code.js
         run: |
-          # Expect first line like: const version = "12.06";
           version=$(sed -n '1s/.*const version = "\([0-9]\+\)\.\([0-9]\+\)".*/\1.\2/p' code.js)
 
           if [ -z "$version" ]; then
@@ -52,14 +48,6 @@ jobs:
           echo "NEW_VERSION=$new_version" >> "$GITHUB_ENV"
           echo "Bumped version to $new_version"
 
-      - name: Install Node.js
-        uses: actions/setup-node@v6
-        with:
-          node-version: '24'
-
-      - name: Build minified code
-        run: npx uglify-js code.js -o code.min.js
-
       - name: Update bm-toolkit-desktop.user.js
         run: |
           test -f bm-toolkit-desktop.user.js || {
@@ -72,20 +60,19 @@ jobs:
           import os
 
           user_file = Path("bm-toolkit-desktop.user.js")
-          min_file = Path("code.min.js")
+          source_file = Path("code.js")
           new_version = os.environ["NEW_VERSION"]
 
           lines = user_file.read_text().splitlines()
-          minified = min_file.read_text().strip()
-
-          # Replace line 16, 1-indexed
-          lines[15] = minified
+          source = source_file.read_text().strip()
 
           # Replace @version on line 4, 1-indexed
           lines[3] = f"// @version {new_version}"
 
+          # Replace line 16, 1-indexed, with raw code.js
+          lines[15] = source
+
           user_file.write_text("\n".join(lines) + "\n")
-          min_file.unlink()
           PY
 
       - name: Detect changes
@@ -107,7 +94,7 @@ jobs:
           git config --global user.email "actions@github.com"
           git config --global user.name "GitHub Actions"
 
-          git commit -m "Build .user.js and bump to v$NEW_VERSION"
+          git commit -m "Update userscript and bump to v$NEW_VERSION"
 
       - name: Push changes
         if: steps.changes.outputs.changed == 'true'
