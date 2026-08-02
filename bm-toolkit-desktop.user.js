@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name Battlemetrics Toolkit - Desktop
 // @namespace https://www.battlemetrics.com/
-// @version 12.21
+// @version 12.22
 // @updateURL https://raw.githubusercontent.com/liquid-gaming/bm-userscript/main/bm-toolkit-desktop.user.js
 // @downloadURL https://raw.githubusercontent.com/liquid-gaming/bm-userscript/main/bm-toolkit-desktop.user.js
 // @description Modifies the rcon panel for battlemetrics to help color code important events and details about players.
@@ -13,7 +13,7 @@
 // @connect communitybanlist.com
 // @run-at document-end
 // ==/UserScript==
-const version = "12.21";
+const version = "12.22";
 const updateRate = 150;
 
 const colors = {
@@ -356,30 +356,54 @@ function getActivityElements() {
     const stableItems = document.querySelectorAll(selectors.activityItems);
 
     if (stableItems.length) {
-        return stableItems;
+        return [...stableItems];
     }
 
-    // Fallback: only rows that look like activity/admin log entries.
-    // Avoid scanning the entire page because that colors Notes/Admin Log/form labels.
-    return [...document.querySelectorAll("li, tr, article, [class]")]
-        .filter(el => {
-            const text = el.textContent?.trim() || "";
+    const phrases = [
+        " was kicked ",
+        " was warned ",
+        " was banned ",
+        " joined the server",
+        " left the server",
+        " team killed ",
+        " requested ",
+        " changed the map ",
+        " set the next map ",
+        " restarted the match",
+        "Trigger added flag"
+    ];
 
-            const looksLikeLogEntry =
-                text.includes(" was kicked ") ||
-                text.includes(" was warned ") ||
-                text.includes(" was banned ") ||
-                text.includes(" joined the server") ||
-                text.includes(" left the server") ||
-                text.includes(" team killed ") ||
-                text.includes(" requested ") ||
-                text.includes(" changed the map ") ||
-                text.includes(" set the next map ") ||
-                text.includes(" restarted the match") ||
-                text.includes("Trigger added flag");
+    const hasPhrase = text =>
+        phrases.some(phrase => text.includes(phrase));
 
-            return looksLikeLogEntry && text.length < 800;
+    const candidates = [
+        ...document.querySelectorAll("div, li, tr, article")
+    ];
+
+    return candidates.filter(el => {
+        const text = el.textContent?.trim() || "";
+
+        if (!text || text.length > 800 || !hasPhrase(text)) {
+            return false;
+        }
+
+        // Reject large parent containers when a smaller descendant
+        // contains the actual individual activity row.
+        const matchingDescendant = [
+            ...el.querySelectorAll("div, li, tr, article")
+        ].some(child => {
+            const childText = child.textContent?.trim() || "";
+
+            return (
+                childText.length > 0 &&
+                childText.length < text.length &&
+                childText.length <= 800 &&
+                hasPhrase(childText)
+            );
         });
+
+        return !matchingDescendant;
+    });
 }
 
 function logColoring() {
